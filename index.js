@@ -278,9 +278,9 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-  res.send('Akeneo server')
+  res.send('The Gurirdian  server')
 })
 
 app.listen(port, () => {
-  console.log(`Akeneo Server is running on port: ${port}`)
+  console.log(`The Gurirdian News Server is running on port: ${port}`)
 })
