@@ -10,6 +10,7 @@ const port = process.env.PORT || 5000;
 const corsOptions = {
   origin: [
     "http://localhost:5173",
+    "http://localhost:5174",
     "https://assignment-11-ahad.netlify.app",
     "https://ahad-product-query.web.app",
     "https://ahad-product-query.firebaseapp.com",
@@ -278,9 +279,9 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-  res.send('Akeneo server')
+  res.send('Guirdian News server')
 })
 
 app.listen(port, () => {
-  console.log(`Akeneo Server is running on port: ${port}`)
+  console.log(`Guirdian News Server is running on port: ${port}`)
 })
