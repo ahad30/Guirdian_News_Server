@@ -45,7 +45,10 @@ async function run() {
     // await client.connect();
 
     const productQueryCollection = client.db('productQueriesDB').collection('productQuery');
-    const recommendQueryCollection = client.db('productQueriesDB').collection('recommendQuery');
+    
+    const userCollection = client.db("guirdianNews").collection("users");
+    
+
 
     // const index = { itemName: 1, brandName: 1 }
     // const indextOptions = { name: "ProductName" }
@@ -88,6 +91,23 @@ async function run() {
         next();
       }
   
+
+      // User Section
+      app.post('/users', async (req, res) => {
+        const user = req.body;
+        // insert email if user doesnt exists: 
+        // you can do this many ways (1. email unique, 2. upsert 3. simple checking)
+        const query = { email: user.email }
+        const existingUser = await userCollection.findOne(query);
+        if (existingUser) {
+          return res.send({ message: 'user already exists', insertedId: null })
+        }
+        const result = await userCollection.insertOne(user);
+        res.send(result);
+      });
+
+
+
 
 
     app.get("/products", async (req, res) => {
@@ -193,63 +213,11 @@ async function run() {
     })
 
 
-    // Recommend Section
-
-    app.put('/addComment/:id', async (req, res) => {
-      const id = req.params.id;
-      const recommendationData = req.body;
-
-      try {
-        const result = await productQueryCollection.updateOne(
-          { _id: new ObjectId(id) },
-          { $push: { recommended: recommendationData } }
-        );
-
-        console.log(result);
-        res.send({ result: result });
-      } catch (error) {
-        console.error(error);
-        res.status(500).send({ error: 'An error occurred while adding the comment.' });
-      }
-    });
 
 
-    app.get('/myRecommend/:email', async (req, res) => {
-      try {
-        const email = req.params.email;
-        const result = await productQueryCollection.find({ 'recommended.userEmail': email }).toArray();
-        console.log(result)
-        const userRecommendations = result.map(item => ({
-          ...item,
-          recommended: item.recommended.filter(recommendation => recommendation.userEmail === email)
-        }));
-        res.send(userRecommendations);
-      } catch (error) {
-        console.error(error);
-        res.status(500).send({ error: 'An error occurred while fetching recommendations.' });
-      }
-    })
     
 
-    app.delete('/deleteQueryItem/:id/:recommendationId/:email', async (req, res) => {
-      try {
-        const id = req.params.id;
-        const recommendationId = req.params.recommendationId;
-        const email = req.params.email;
     
-        const query = { _id: new ObjectId(id) };
-    
-        // Remove the targeted recommendation from the query document
-        const result = await productQueryCollection.updateOne(
-          query,
-          { $pull: { recommended: { _id: new ObjectId(recommendationId), userEmail: email } } }
-        );
-    
-        res.send(result);
-      } catch (error) {
-        res.status(500).send({ message: "something went wrong" });
-      }
-    });
     
     
 
