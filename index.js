@@ -44,8 +44,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
-    const productQueryCollection = client.db('productQueriesDB').collection('productQuery');
-
+    const articleCollection = client.db('guirdianNews').collection('articles');
     const userCollection = client.db("guirdianNews").collection("users");
 
 
@@ -69,6 +68,7 @@ async function run() {
       if (!req.headers.authorization) {
         return res.status(401).send({ message: 'unauthorized access' });
       }
+      console.log(req.headers.authorization)
       const token = req.headers.authorization.split(' ')[1];
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
@@ -99,26 +99,35 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/users/admin/:email', verifyToken, async (req, res) => {
-      const email = req.params.email;
 
-      if (email !== req.decoded.email) {
-        return res.status(403).send({ message: 'forbidden access' })
+    // is Admin Check?????
+
+    app.get('/users/admin/:email', verifyToken, async (req, res) => {
+      try {
+        const email = req.params.email;
+
+        if (email !== req.decoded.email) {
+          return res.status(403).send({ message: 'forbidden access' })
+        }
+
+        // console.log(query)
+        const user = await userCollection.findOne({ email: email });
+        // console.log(user)
+        let admin = false;
+        if (user) {
+          admin = user?.role === 'admin';
+        }
+        res.send({ admin });
       }
-      const query = { email: email };
-      const user = await userCollection.findOne(query);
-      let admin = false;
-      if (user) {
-        admin = user?.role === 'admin';
+      catch (error) {
+        res.status(404).send({ error: 'no user found' })
       }
-      res.send({ admin });
     })
 
 
     app.post('/users', async (req, res) => {
       const user = req.body;
-      // insert email if user doesnt exists: 
-      // you can do this many ways (1. email unique, 2. upsert 3. simple checking)
+
       const query = { email: user.email }
       const existingUser = await userCollection.findOne(query);
       if (existingUser) {
@@ -148,6 +157,9 @@ async function run() {
       const result = await userCollection.deleteOne(query);
       res.send(result);
     })
+
+
+
 
 
     app.get("/products", async (req, res) => {
@@ -212,11 +224,11 @@ async function run() {
 
 
 
-    app.post('/addSingleQuery', async (req, res) => {
+    app.post('/addArticle', async (req, res) => {
       try {
-        const newProduct = req.body;
-        console.log(newProduct);
-        const result = await productQueryCollection.insertOne({ ...newProduct, recommended: [] });
+        const article = req.body;
+        console.log(article);
+        const result = await articleCollection.insertOne(article);
         res.send(result);
       }
       catch (error) {
