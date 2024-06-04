@@ -44,7 +44,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
-    const articleCollection = client.db('guirdianNews').collection('articles');
+    const articleCollection = client.db("guirdianNews").collection("articles");
     const userCollection = client.db("guirdianNews").collection("users");
 
 
@@ -68,7 +68,7 @@ async function run() {
       if (!req.headers.authorization) {
         return res.status(401).send({ message: 'unauthorized access' });
       }
-      console.log(req.headers.authorization)
+      // console.log(req.headers.authorization)
       const token = req.headers.authorization.split(' ')[1];
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
