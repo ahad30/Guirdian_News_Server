@@ -46,7 +46,8 @@ async function run() {
 
     const articleCollection = client.db("guirdianNews").collection("articles");
     const userCollection = client.db("guirdianNews").collection("users");
-
+    const publisherCollection = client.db("guirdianNews").collection("publisher");
+    
 
 
     // const index = { itemName: 1, brandName: 1 }
@@ -92,7 +93,7 @@ async function run() {
     }
 
 
-    // User Section
+    // User Section Api
 
     app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
       const result = await userCollection.find().toArray();
@@ -100,7 +101,6 @@ async function run() {
     });
 
 
-    // is Admin Check?????
 
     app.get('/users/admin/:email', verifyToken, async (req, res) => {
       try {
@@ -160,8 +160,8 @@ async function run() {
 
 
 
-
-
+    // All Article APi
+     
     app.get("/products", async (req, res) => {
       try {
         const searchText = req.query.search
@@ -177,6 +177,7 @@ async function run() {
         res.status(404).send({ error })
       }
     })
+
 
 
     app.get('/getSingleQuery', async (req, res) => {
@@ -204,6 +205,9 @@ async function run() {
     })
 
 
+
+
+    // User Article Api
 
     app.get("/mySingleQuery/:email", async (req, res) => {
       try {
@@ -266,12 +270,19 @@ async function run() {
 
 
 
-
-
-
-
-
-
+    //  Publisher Api
+    app.post('/addPublisher', async (req, res) => {
+      try {
+        const publisher = req.body;
+        console.log(publisher);
+        const result = await publisherCollection.insertOne(publisher);
+        res.send(result);
+      }
+      catch (error) {
+        res.status(500).send({ message: "some thing went wrong" })
+      }
+    })   
+      
 
 
     // Send a ping to confirm a successful connection
