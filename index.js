@@ -180,16 +180,16 @@ async function run() {
 
 
 
-    app.get('/getSingleQuery', async (req, res) => {
-      try {
-        const cursor = productQueryCollection.find().sort({ _id: -1 });
-        const result = await cursor.toArray();
-        res.send(result);
-      }
-      catch (error) {
-        res.status(500).send({ message: "some thing went wrong" })
-      }
-    })
+    // app.get('/getSingleQuery', async (req, res) => {
+    //   try {
+    //     const cursor = productQueryCollection.find().sort({ _id: -1 });
+    //     const result = await cursor.toArray();
+    //     res.send(result);
+    //   }
+    //   catch (error) {
+    //     res.status(500).send({ message: "some thing went wrong" })
+    //   }
+    // })
 
 
     app.get('/queryDetails/:id', async (req, res) => {
@@ -283,6 +283,15 @@ async function run() {
       }
     })   
       
+    app.get('/publishers',  async (req, res) => {
+     try{
+      const result = await publisherCollection.find().toArray();
+      res.send(result);
+     }
+     catch (error) {
+      res.status(500).send({ message: "some thing went wrong" })
+    }
+    });
 
 
     // Send a ping to confirm a successful connection
