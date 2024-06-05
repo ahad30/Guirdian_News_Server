@@ -179,17 +179,17 @@ async function run() {
     })
 
 
-
-    // app.get('/getSingleQuery', async (req, res) => {
-    //   try {
-    //     const cursor = productQueryCollection.find().sort({ _id: -1 });
-    //     const result = await cursor.toArray();
-    //     res.send(result);
-    //   }
-    //   catch (error) {
-    //     res.status(500).send({ message: "some thing went wrong" })
-    //   }
-    // })
+    // For Admin All Article
+    app.get('/allArticle', async (req, res) => {
+      try {
+        const cursor = articleCollection.find().sort({ _id: -1 });
+        const result = await cursor.toArray();
+        res.send(result);
+      }
+      catch (error) {
+        res.status(500).send({ message: "some thing went wrong" })
+      }
+    })
 
 
     app.get('/queryDetails/:id', async (req, res) => {
@@ -209,14 +209,14 @@ async function run() {
 
     // User Article Api
 
-    app.get("/mySingleQuery/:email", async (req, res) => {
+    app.get("/myArticleList/:email", verifyToken, async (req, res) => {
       try {
         // const tokenEmail = req.user.email
         const email = req.params.email
         // if (tokenEmail !== email) {
         //   return res.status(403).send({ message: 'forbidden access' })
         // }              
-        const result = await productQueryCollection.find({ 'posterInfo.userEmail': email }).sort({ _id: -1 }).toArray();
+        const result = await articleCollection.find({userEmail: email }).sort({ _id: -1 }).toArray();
         console.log(result)
         res.send(result)
       }
@@ -241,7 +241,7 @@ async function run() {
     })
 
 
-    app.put('/updateQueryItem/:id', async (req, res) => {
+    app.put('/updateArticle/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) }
       const options = { upsert: true };
@@ -252,15 +252,15 @@ async function run() {
         }
       }
 
-      const result = await productQueryCollection.updateOne(filter, item, options);
+      const result = await articleCollection.updateOne(filter, item, options);
       res.send(result);
     })
 
-    app.delete('/deleteQueryItem/:id', async (req, res) => {
+    app.delete('/deleteArticle/:id', async (req, res) => {
       try {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) }
-        const result = await productQueryCollection.deleteOne(query);
+        const result = await articleCollection.deleteOne(query);
         res.send(result);
       }
       catch (error) {
