@@ -180,7 +180,7 @@ async function run() {
 
 
     // For Admin All Article
-    app.get('/allArticle', async (req, res) => {
+    app.get('/allArticle',verifyToken,verifyAdmin, async (req, res) => {
       try {
         const cursor = articleCollection.find().sort({ _id: -1 });
         const result = await cursor.toArray();
@@ -223,7 +223,6 @@ async function run() {
       catch (error) {
         res.status(500).send({ message: "some thing went wrong" })
       }
-
     })
 
 
@@ -251,7 +250,6 @@ async function run() {
           ...updatedItem
         }
       }
-
       const result = await articleCollection.updateOne(filter, item, options);
       res.send(result);
     })
