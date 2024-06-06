@@ -192,11 +192,11 @@ async function run() {
     })
 
 
-    app.get('/queryDetails/:id', async (req, res) => {
+    app.get('/articleDetails/:id', async (req, res) => {
       try {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) }
-        const result = await productQueryCollection.findOne(query);
+        const result = await articleCollection.findOne(query);
         res.send(result);
       }
       catch (error) {
