@@ -93,7 +93,7 @@ async function run() {
     }
 
 
-    // User Section Api
+    //Admin User Section Api
 
     app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
       const result = await userCollection.find().toArray();
@@ -105,14 +105,14 @@ async function run() {
     app.get('/users/admin/:email', verifyToken, async (req, res) => {
       try {
         const email = req.params.email;
-
+       
         if (email !== req.decoded.email) {
           return res.status(403).send({ message: 'forbidden access' })
         }
 
-        // console.log(query)
+        
         const user = await userCollection.findOne({ email: email });
-        // console.log(user)
+    
         let admin = false;
         if (user) {
           admin = user?.role === 'admin';
@@ -229,7 +229,7 @@ async function run() {
     
 
 
-    app.patch('/articleStatus/:id', async (req, res) => {
+    app.patch('/articleStatus/:id',verifyToken,verifyAdmin, async (req, res) => {
       const id = req.params.id
       const status = req.body
       const query = { _id: new ObjectId(id) }
