@@ -180,64 +180,46 @@ async function run() {
 
 
     // For Admin All Article
-    // app.get('/allArticle',verifyToken,verifyAdmin, async (req, res) => {
-    //   try {
-    //     const cursor = articleCollection.find().sort({ _id: -1 });
-    //     const result = await cursor.toArray();
-    //     res.send(result);
-    //   }
-    //   catch (error) {
-    //     res.status(500).send({ message: "some thing went wrong" })
-    //   }
-    // })
-
+    
 
     app.get('/allArticle', verifyToken, verifyAdmin, async (req, res) => {
       try {
         const result = await articleCollection.aggregate([
-  
           {
             $lookup: {
               from: 'users',
               localField: 'userEmail',
               foreignField: 'email',
-              as: 'user'
-            }
+              as: 'user',
+            },
           },
-          // {
-          //   $unwind: '$user' 
-          // },
-          // {
-          //   $group: {
-          //     _id: '$_id',
-          //     title: { $first: '$title' },
-          //     description: { $first: '$description' },
-          //     deadline: { $first: '$deadline' },
-          //     isPremium: { $first: '$isPremium' },
-          //     tags: { $first: '$tags' },
-          //     publisher: { $first: '$publisher' },
-          //     user: { $push: '$user' }
-          //   }
-          // },
+          {
+            $unwind: '$user',
+          },
           {
             $project: {
-              _id: 1, // Keep the article _id
+              _id: 1,
               title: 1,
               description: 1,
               deadline: 1,
               isPremium: 1,
               tags: 1,
               publisher: 1,
-              userName: 1,
-              userEmail: 1,
-              user:{
-              isChange: 1,
-              subscription: 1
-             }
-            }
-          }
+              photo: 1,
+              status: 1,
+              image: 1,
+              user: {
+                _id: 1,
+                email: 1,
+                name: 1,
+                subscription: 1,
+                isChange: 1,
+                role: 1,
+              },
+            },
+          },
         ]).toArray();
-    
+
         res.send(result);
       } catch (error) {
         res.status(500).send({ error: error.message });
