@@ -45,7 +45,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
-    
+
     const articleCollection = client.db("guirdianNews").collection("articles");
     const userCollection = client.db("guirdianNews").collection("users");
     const publisherCollection = client.db("guirdianNews").collection("publisher");
@@ -99,6 +99,12 @@ async function run() {
 
 
     //Admin User Section Api
+
+    app.get('/users', async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+
 
     app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
       const result = await userCollection.find().toArray();
