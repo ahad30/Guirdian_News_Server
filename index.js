@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 const corsOptions = {
@@ -44,10 +45,13 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
+    
     const articleCollection = client.db("guirdianNews").collection("articles");
     const userCollection = client.db("guirdianNews").collection("users");
     const publisherCollection = client.db("guirdianNews").collection("publisher");
     const feedbackCollection = client.db("guirdianNews").collection("feedback");
+    const paymentCollection = client.db("guirdianNews").collection("subscription");
+    const viewCollection = client.db("guirdianNews").collection("view");
     
 
 
@@ -162,30 +166,70 @@ async function run() {
 
     // All Article APi
      
-    app.get("/products", async (req, res) => {
+    // {
+    //   $or: [
+    //     { title: { $regex: searchText, $options: "i" } },
+    //   ]
+    // }
+
+    app.get("/articleSearch", async (req, res) => {
       try {
         const searchText = req.query.search
+        const filter = req.query.filter
         console.log(searchText)
-        const result = await productQueryCollection.find({
-          $or: [
-            { itemName: { $regex: searchText, $options: "i" } },
-            { brandName: { $regex: searchText, $options: "i" } }
-          ]
-        }).toArray()
+        let query = {
+          title: { $regex: searchText, $options: 'i' },
+        }
+        const result = await articleCollection.find(query).toArray()
         res.send({ result })
       } catch (error) {
         res.status(404).send({ error })
       }
     })
 
+
     app.get('/allArticles',  async (req, res) => {
-      try{
-       const result = await articleCollection.find().toArray();
-       res.send(result);
+      try {
+        const result = await articleCollection.aggregate([
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'userEmail',
+              foreignField: 'email',
+              as: 'user',
+            },
+          },
+          {
+            $unwind: '$user',
+          },
+          {
+            $project: {
+              _id: 1,
+              title: 1,
+              description: 1,
+              deadline: 1,
+              isPremium: 1,
+              tags: 1,
+              publisher: 1,
+              photo: 1,
+              status: 1,
+              image: 1,
+              user: {
+                _id: 1,
+                email: 1,
+                name: 1,
+                subscription: 1,
+                isChange: 1,
+                role: 1,
+              },
+            },
+          },
+        ]).toArray();
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ error: error.message });
       }
-      catch (error) {
-       res.status(500).send({ message: "some thing went wrong" })
-     }
      });
 
 
@@ -380,6 +424,53 @@ async function run() {
         res.status(500).send({ message: "some thing went wrong" })
       }
     })
+
+
+// Payment Intent
+app.post('/create-payment-intent', async (req, res) => {
+  const { price } = req.body;
+  const amount = parseInt(price * 100);
+  console.log(amount, 'amount inside the intent')
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: 'usd',
+    payment_method_types: ['card']
+  });
+
+  res.send({
+    clientSecret: paymentIntent.client_secret
+  })
+});
+
+
+app.get('/payments/:email', verifyToken, async (req, res) => {
+  const query = { email: req.params.email }
+  if (req.params.email !== req.decoded.email) {
+    return res.status(403).send({ message: 'forbidden access' });
+  }
+  const result = await paymentCollection.find(query).toArray();
+  res.send(result);
+})
+
+app.post('/payments', async (req, res) => {
+  const payment = req.body;
+  const paymentResult = await paymentCollection.insertOne(payment);
+
+  //  carefully delete each item from the cart
+  console.log('payment info', payment);
+  const query = {
+    _id: {
+      $in: payment.cartIds.map(id => new ObjectId(id))
+    }
+  };
+
+  const deleteResult = await cartCollection.deleteMany(query);
+
+  res.send({ paymentResult, deleteResult });
+})
+
+
 
 
     // Send a ping to confirm a successful connection
