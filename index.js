@@ -47,6 +47,7 @@ async function run() {
     const articleCollection = client.db("guirdianNews").collection("articles");
     const userCollection = client.db("guirdianNews").collection("users");
     const publisherCollection = client.db("guirdianNews").collection("publisher");
+    const feedbackCollection = client.db("guirdianNews").collection("feedback");
     
 
 
@@ -99,7 +100,6 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
-
 
 
     app.get('/users/admin/:email', verifyToken, async (req, res) => {
@@ -178,6 +178,29 @@ async function run() {
       }
     })
 
+    app.get('/allArticles',  async (req, res) => {
+      try{
+       const result = await articleCollection.find().toArray();
+       res.send(result);
+      }
+      catch (error) {
+       res.status(500).send({ message: "some thing went wrong" })
+     }
+     });
+
+
+    app.get('/articleDetails/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) }
+        const result = await articleCollection.findOne(query);
+        res.send(result);
+      }
+      catch (error) {
+        res.status(500).send({ message: "some thing went wrong" })
+      }
+    })
+
 
     // For Admin All Article
     
@@ -241,21 +264,9 @@ async function run() {
     })
 
 
-    app.get('/articleDetails/:id', async (req, res) => {
-      try {
-        const id = req.params.id;
-        const query = { _id: new ObjectId(id) }
-        const result = await articleCollection.findOne(query);
-        res.send(result);
-      }
-      catch (error) {
-        res.status(500).send({ message: "some thing went wrong" })
-      }
-    })
-
-
-
-
+   
+  
+    
     // User Article Api
 
     app.get("/myArticleList/:email", verifyToken, async (req, res) => {
@@ -339,6 +350,36 @@ async function run() {
       res.status(500).send({ message: "some thing went wrong" })
     }
     });
+
+
+
+    //Admin feedback section
+
+  app.post('/addFeedback', async (req, res) => {
+      try {
+        const feedback = req.body;
+        console.log(feedback);
+        const result = await feedbackCollection.insertOne(feedback);
+        res.send(result);
+      }
+      catch (error) {
+        res.status(500).send({ message: "some thing went wrong" })
+      }
+    })
+
+    app.get("/myArticleReason/:email/:id", verifyToken, async (req, res) => {
+      try {
+        const email = req.params.email              
+        const id = req.params.id  
+        console.log(id)            
+        const result = await feedbackCollection.find({userEmail: email , articleId : id }).toArray();
+        // console.log(result)
+        res.send(result)
+      }
+      catch (error) {
+        res.status(500).send({ message: "some thing went wrong" })
+      }
+    })
 
 
     // Send a ping to confirm a successful connection
