@@ -49,9 +49,8 @@ async function run() {
     const publisherCollection = client.db("guirdianNews").collection("publisher");
     const feedbackCollection = client.db("guirdianNews").collection("feedback");
     const paymentCollection = client.db("guirdianNews").collection("subscription");
-    const viewCollection = client.db("guirdianNews").collection("view");
+ 
     
-
 
     // const index = { itemName: 1, brandName: 1 }
     // const indextOptions = { name: "ProductName" }
@@ -319,9 +318,25 @@ async function run() {
     })
 
 
+    app.patch('/articlePremium/:id',verifyToken,verifyAdmin, async (req, res) => {
+     try{
+      const id = req.params.id
+      const isPremium = req.body
+      console.log(isPremium)
+      const query = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: isPremium
+      }
+      const result = await articleCollection.updateOne(query, updateDoc)
+      res.send(result)
+     }
+      catch (error) {
+        res.status(500).send({ message: "some thing went wrong" })
+      }
+    })
+
    
   
-    
     // User Article Api
 
     app.get("/myArticleList/:email", verifyToken, async (req, res) => {
@@ -332,7 +347,6 @@ async function run() {
         //   return res.status(403).send({ message: 'forbidden access' })
         // }              
         const result = await articleCollection.find({userEmail: email }).sort({ _id: -1 }).toArray();
-        console.log(result)
         res.send(result)
       }
       catch (error) {
@@ -345,7 +359,6 @@ async function run() {
     app.post('/addArticle', async (req, res) => {
       try {
         const article = req.body;
-        // console.log(article);
         const result = await articleCollection.insertOne({...article, viewCount: 0});
         res.send(result);
       }
