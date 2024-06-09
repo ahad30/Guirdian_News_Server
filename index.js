@@ -303,7 +303,28 @@ async function run() {
       }
     });
     
-    
+    app.get('/articles/countByPublisher', async (req, res) => {
+      try {
+        const result = await articleCollection.aggregate([
+          {
+            $group: {
+              _id: "$publisher.label",
+              count: { $sum: 1 }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              publisher: "$_id",
+              count: 1
+            }
+          }
+        ]).toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: "something went wrong", error: error.message });
+      }
+    });
 
 
     app.patch('/articleStatus/:id',verifyToken,verifyAdmin, async (req, res) => {
