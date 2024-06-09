@@ -172,23 +172,18 @@ async function run() {
 
     // All Article APi
      
-    // {
-    //   $or: [
-    //     { title: { $regex: searchText, $options: "i" } },
-    //   ]
-    // }
 
     app.get("/articleSearch", async (req, res) => {
       try {
         const searchText = req.query.search || "";
         const filter = req.query.filter || "";
         const publishFilter = req.query.publisherFilter || "";
-         console.log(publishFilter)
+        //  console.log(publishFilter)
 
         let query = {
           title: { $regex: searchText, $options: 'i' },
         };
-        
+
         if (filter) {
           query['tags.label'] = filter;
         }
@@ -196,7 +191,7 @@ async function run() {
           query['publisher.label'] = publishFilter;
         }
     
-        console.log("Query:", query);  // Log the query to debug
+        // console.log("Query:", query);
         const result = await articleCollection.find(query).toArray();
         res.send({ result });
       } catch (error) {
@@ -352,8 +347,8 @@ async function run() {
     app.post('/addArticle', async (req, res) => {
       try {
         const article = req.body;
-        console.log(article);
-        const result = await articleCollection.insertOne(article);
+        // console.log(article);
+        const result = await articleCollection.insertOne({...article, viewCount: 0});
         res.send(result);
       }
       catch (error) {
@@ -442,6 +437,36 @@ async function run() {
         res.status(500).send({ message: "some thing went wrong" })
       }
     })
+
+
+  // Article Views Section
+
+app.patch('/incrementViewCount/:id', async (req, res) => {
+  const id = req.params.id;
+  try {
+    const query = { _id: new ObjectId(id) };
+    const updateDoc = {
+      $inc: { viewCount: 1 }
+    };
+    const result = await articleCollection.updateOne(query, updateDoc);
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ message: 'Something went wrong' });
+  }
+});
+
+
+app.get('/trendingArticles', async (req, res) => {
+  try {
+    const result = await articleCollection.find().sort({ viewCount: -1 }).limit(6).toArray();
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ message: 'Something went wrong' });
+  }
+});
+
+
+
 
 
 // Payment Intent
