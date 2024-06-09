@@ -12,9 +12,7 @@ const corsOptions = {
   origin: [
     "http://localhost:5173",
     "http://localhost:5174",
-    "https://assignment-11-ahad.netlify.app",
-    "https://ahad-product-query.web.app",
-    "https://ahad-product-query.firebaseapp.com",
+    "https://the-guirdian-news.netlify.app"
   ],
   credentials: true,
   optionSuccessStatus: 200,
