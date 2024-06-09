@@ -180,18 +180,30 @@ async function run() {
 
     app.get("/articleSearch", async (req, res) => {
       try {
-        const searchText = req.query.search
-        const filter = req.query.filter
-        console.log(searchText)
+        const searchText = req.query.search || "";
+        const filter = req.query.filter || "";
+        const publishFilter = req.query.publisherFilter || "";
+         console.log(publishFilter)
+
         let query = {
           title: { $regex: searchText, $options: 'i' },
+        };
+        
+        if (filter) {
+          query['tags.label'] = filter;
         }
-        const result = await articleCollection.find(query).toArray()
-        res.send({ result })
+        if (publishFilter) {
+          query['publisher.label'] = publishFilter;
+        }
+    
+        console.log("Query:", query);  // Log the query to debug
+        const result = await articleCollection.find(query).toArray();
+        res.send({ result });
       } catch (error) {
-        res.status(404).send({ error })
+        res.status(404).send({ error });
       }
-    })
+    });
+    
 
 
     app.get('/allArticles',  async (req, res) => {
@@ -458,6 +470,7 @@ app.get('/payments/:email', verifyToken, async (req, res) => {
   const result = await paymentCollection.find(query).toArray();
   res.send(result);
 })
+
 
 app.post('/payments', async (req, res) => {
   const payment = req.body;
