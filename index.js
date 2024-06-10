@@ -152,7 +152,7 @@ async function run() {
     })
 
 
-    app.post('/users',checkSubscriptionStatus, async (req, res) => {
+    app.post('/users', async (req, res) => {
       const user = req.body;
 
       const query = { email: user.email }
