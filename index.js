@@ -82,6 +82,26 @@ async function run() {
       })
     }
 
+    const checkSubscriptionStatus = async (req, res, next) => {
+      const email = req.decoded.email;
+      const user = await userCollection.findOne({ email: email });
+  
+      if (user?.subscription) {
+          const currentTime = new Date();
+          if (currentTime > new Date(user.subscription)) {
+              await userCollection.updateOne(
+                  { email: email },
+                  { $set: { subscription: null } }
+              );
+              user.subscription = null;
+          }
+      }
+  
+      req.user = user;
+      next();
+  }
+  
+
     // use verify admin after verifyToken
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
@@ -93,8 +113,8 @@ async function run() {
       }
       next();
     }
-
-
+ 
+    
     //Admin User Section Api
 
     app.get('/users', async (req, res) => {
@@ -132,7 +152,7 @@ async function run() {
     })
 
 
-    app.post('/users', async (req, res) => {
+    app.post('/users',checkSubscriptionStatus, async (req, res) => {
       const user = req.body;
 
       const query = { email: user.email }
@@ -375,6 +395,17 @@ async function run() {
       }
     })
 
+    app.get("/premiumtaken/:email", async (req, res) => {
+      try {   
+        const email = req.params.email            
+        const result = await userCollection.find({email: email }).toArray();
+        res.send(result)
+      }
+      catch (error) {
+        res.status(500).send({ message: "some thing went wrong" })
+      }
+    })
+
 
 
     app.post('/addArticle', async (req, res) => {
@@ -531,20 +562,28 @@ app.get('/payments/:email', verifyToken, async (req, res) => {
 
 app.post('/payments', async (req, res) => {
   const payment = req.body;
+  const { email, subscriptionPeriod } = payment;
+
+  // Calculate subscription expiry date
+  let expiryDate;
+  if (subscriptionPeriod === '1 minute') {
+      expiryDate = new Date(Date.now() + 1 * 60000); // 1 minute in milliseconds
+  } else if (subscriptionPeriod === '5 days') {
+      expiryDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000); // 5 days in milliseconds
+  } else if (subscriptionPeriod === '10 days') {
+      expiryDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000); // 10 days in milliseconds
+  }
+
+  // Save payment details and update user subscription
   const paymentResult = await paymentCollection.insertOne(payment);
-
-  //  carefully delete each item from the cart
-  console.log('payment info', payment);
-  // const query = {
-  //   _id: {
-  //     $in: payment.cartIds.map(id => new ObjectId(id))
-  //   }
-  // };
-
-  // const deleteResult = await cartCollection.deleteMany(query);
+  await userCollection.updateOne(
+      { email: email },
+      { $set: { subscription: expiryDate , isChange : true } }
+  );
 
   res.send({ paymentResult });
-})
+});
+
 
 
 
