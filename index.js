@@ -82,25 +82,49 @@ async function run() {
       })
     }
 
-    const checkSubscriptionStatus = async (req, res, next) => {
+  //   const checkSubscriptionStatus = async (req, res, next) => {
+  //     const email = req.decoded.email;
+  //     const user = await userCollection.findOne({ email: email });
+  
+  //     if (user?.subscription) {
+  //         const currentTime = new Date();
+  //         if (currentTime > new Date(user.subscription)) {
+  //             await userCollection.updateOne(
+  //                 { email: email },
+  //                 { $set: { subscription: null } }
+  //             );
+  //             user.subscription = null;
+  //         }
+  //     }
+  
+  //     req.user = user;
+  //     next();
+  // }
+  
+
+  app.get('/check-subscription-status', verifyToken, async (req, res) => {
+    try {
       const email = req.decoded.email;
       const user = await userCollection.findOne({ email: email });
-  
+
       if (user?.subscription) {
-          const currentTime = new Date();
-          if (currentTime > new Date(user.subscription)) {
-              await userCollection.updateOne(
-                  { email: email },
-                  { $set: { subscription: null } }
-              );
-              user.subscription = null;
-          }
+        const currentTime = new Date();
+        if (currentTime > new Date(user.subscription)) {
+          await userCollection.updateOne(
+            { email: email },
+            { $set: { subscription: null, isChange : false } }
+          );
+          user.subscription = null;
+
+        }
       }
-  
-      req.user = user;
-      next();
-  }
-  
+
+      res.status(200).json(user);
+    } catch (error) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
 
     // use verify admin after verifyToken
     const verifyAdmin = async (req, res, next) => {
@@ -566,8 +590,8 @@ app.post('/payments', async (req, res) => {
 
   // Calculate subscription expiry date
   let expiryDate;
-  if (subscriptionPeriod === '1 minute') {
-      expiryDate = new Date(Date.now() + 1 * 60000); // 1 minute in milliseconds
+  if (subscriptionPeriod === '3 minute') {
+      expiryDate = new Date(Date.now() + 3 * 60000); // 1 minute in milliseconds
   } else if (subscriptionPeriod === '5 days') {
       expiryDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000); // 5 days in milliseconds
   } else if (subscriptionPeriod === '10 days') {
