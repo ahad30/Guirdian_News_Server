@@ -147,8 +147,17 @@ async function run() {
     });
 
 
-    app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
-      const result = await userCollection.find().toArray();
+    app.get('/userPaginationCount',verifyToken,verifyAdmin, async (req, res) => {
+      const count = await userCollection.estimatedDocumentCount();
+      res.send({ count });
+    })
+
+
+    app.get('/adminUsers', verifyToken, verifyAdmin, async (req, res) => {
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
+      const result = await userCollection.find().skip(page * size)
+      .limit(size).toArray();
       res.send(result);
     });
 
@@ -303,8 +312,11 @@ async function run() {
     // For Admin All Article
     
 
-    app.get('/allArticle', verifyToken, verifyAdmin, async (req, res) => {
+    app.get('/allAdminArticle', verifyToken, verifyAdmin, async (req, res) => {
       try {
+        const page = parseInt(req.query.page) ;
+        const size = parseInt(req.query.size);
+    
         const result = await articleCollection.aggregate([
           {
             $lookup: {
@@ -339,14 +351,26 @@ async function run() {
               },
             },
           },
-        ]).toArray();
-
+        ])
+        .skip(page * size)
+        .limit(size)
+        .toArray();
+    
         res.send(result);
       } catch (error) {
         res.status(500).send({ error: error.message });
       }
     });
     
+
+
+    app.get('/articlesPaginationCount',verifyToken,verifyAdmin, async (req, res) => {
+      const count = await articleCollection.estimatedDocumentCount();
+      res.send({ count });
+    })
+
+
+
     app.get('/articles/countByPublisher', async (req, res) => {
       try {
         const result = await articleCollection.aggregate([
@@ -590,8 +614,8 @@ app.post('/payments', async (req, res) => {
 
   // Calculate subscription expiry date
   let expiryDate;
-  if (subscriptionPeriod === '3 minute') {
-      expiryDate = new Date(Date.now() + 3 * 60000); // 1 minute in milliseconds
+  if (subscriptionPeriod === '2 minute') {
+      expiryDate = new Date(Date.now() + 2 * 60000); // 1 minute in milliseconds
   } else if (subscriptionPeriod === '5 days') {
       expiryDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000); // 5 days in milliseconds
   } else if (subscriptionPeriod === '10 days') {
